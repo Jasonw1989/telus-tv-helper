@@ -49,23 +49,18 @@
 <body>
   <h1>TV Package Recommender</h1>
   <p>Enter the TV channels your customer wants (comma separated):</p>
-  <textarea id="channelInput" placeholder="e.g. HGTV, Fairchild, FX, Crave"></textarea>
+  <textarea id="channelInput" placeholder="e.g. CNN, Discovery, A&E"></textarea>
   <button onclick="recommendPackage()">Recommend Package</button>
   <div class="result" id="result"></div>
 
   <script>
     const channelMap = {
-      "HGTV": "Lifestyle Pack",
-      "Fairchild": "Chinese Pack",
-      "FX": "Drama Pack",
-      "CP24": "News Pack",
-      "CTV Drama": "Drama Pack",
-      "TSN": "TSN & Beyond",
-      "Sportsnet": "Sportsnet & Beyond",
-      "Crave": "Premium",
-      "Netflix": "Premium",
-      "Disney+": "Premium",
-      "Apple TV+": "Premium"
+      "A&E": "Blockbusters",
+      "Movietime": "Blockbusters",
+      "National Geographic": "Explore",
+      "History": "Knowledge",
+      "CNN": "News",
+      "Discovery": "Discovery & Reality"
     };
 
     function recommendPackage() {
@@ -92,4 +87,5 @@
       document.getElementById("result").innerText = resultText;
     }
   </script>
-</
+</body>
+</html>
