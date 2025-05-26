@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TV Package Recommender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a;
+      color: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #66ccff;
+    }
+    textarea {
+      width: 100%;
+      max-width: 500px;
+      height: 100px;
+      padding: 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #66ccff;
+      color: #1a1a1a;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 2rem;
+      background-color: #333;
+      padding: 1rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 500px;
+    }
+  </style>
+</head>
+<body>
+  <h1>TV Package Recommender</h1>
+  <p>Enter the TV channels your customer wants (comma separated):</p>
+  <textarea id="channelInput" placeholder="e.g. HGTV, Fairchild, FX, Crave"></textarea>
+  <button onclick="recommendPackage()">Recommend Package</button>
+  <div class="result" id="result"></div>
+
+  <script>
+    const channelMap = {
+      "HGTV": "Lifestyle Pack",
+      "Fairchild": "Chinese Pack",
+      "FX": "Drama Pack",
+      "CP24": "News Pack",
+      "CTV Drama": "Drama Pack",
+      "TSN": "TSN & Beyond",
+      "Sportsnet": "Sportsnet & Beyond",
+      "Crave": "Premium",
+      "Netflix": "Premium",
+      "Disney+": "Premium",
+      "Apple TV+": "Premium"
+    };
+
+    function recommendPackage() {
+      const input = document.getElementById("channelInput").value;
+      const channels = input.split(",").map(c => c.trim());
+      const themePacks = new Set();
+      let premiumCount = 0;
+
+      channels.forEach(ch => {
+        const pack = channelMap[ch];
+        if (pack) {
+          if (pack === "Premium") premiumCount++;
+          else themePacks.add(pack);
+        }
+      });
+
+      const totalThemes = themePacks.size;
+      const resultText = `Customer wants: ${channels.join(", ")}\n\n` +
+        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
+        `Premium Channels: ${premiumCount} selected\n\n` +
+        `Suggested TELUS Package: Core + ${totalThemes} Theme Pack${totalThemes !== 1 ? "s" : ""}` +
+        `${premiumCount > 0 ? " + " + premiumCount + " Premium" + (premiumCount > 1 ? "s" : "") : ""}`;
+
+      document.getElementById("result").innerText = resultText;
+    }
+  </script>
+</
