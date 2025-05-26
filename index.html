@@ -43,46 +43,88 @@
       border-radius: 8px;
       width: 100%;
       max-width: 500px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
   <h1>TV Package Recommender</h1>
   <p>Enter the TV channels your customer wants (comma separated):</p>
-  <textarea id="channelInput" placeholder="e.g. CNN, Discovery, A&E"></textarea>
+  <textarea id="channelInput" placeholder="e.g. CNN, Discovery, A&E, Netflix, Crave"></textarea>
   <button onclick="recommendPackage()">Recommend Package</button>
   <div class="result" id="result"></div>
 
   <script>
     const channelMap = {
-      "A&E": "Blockbusters",
-      "Movietime": "Blockbusters",
-      "National Geographic": "Explore",
-      "History": "Knowledge",
+      "TSN": "TSN & Beyond",
+      "TSN1": "TSN & Beyond",
+      "TSN2": "TSN & Beyond",
+      "TSN3": "TSN & Beyond",
+      "TSN4": "TSN & Beyond",
+      "TSN5": "TSN & Beyond",
+      "NFL NETWORK": "TSN & Beyond",
+      "GOLF CHANNEL": "TSN & Beyond",
+      "SPORTSNET": "Sportsnet & Beyond",
+      "SPORTSNET ONE": "Sportsnet & Beyond",
+      "SPORTSNET 360": "Sportsnet & Beyond",
+      "SN1": "Sportsnet & Beyond",
+      "SNE": "Sportsnet & Beyond",
+      "SNO": "Sportsnet & Beyond",
+      "SNP": "Sportsnet & Beyond",
+      "SNW": "Sportsnet & Beyond",
+      "FX": "Blockbusters",
+      "FX CANADA": "Blockbusters",
+      "MOVIE TIME": "Blockbusters",
+      "CRIME INVESTIGATION": "Blockbusters",
+      "SHOWCASE": "Lifestyle & Beyond",
+      "NATIONAL GEOGRAPHIC": "Explore",
+      "NETFLIX": "Premium",
+      "CRAVE": "Premium",
+      "DISNEY+": "Premium",
+      "APPLE TV+": "Premium",
+      "AMAZON PRIME": "Premium",
       "CNN": "News",
-      "Discovery": "Discovery & Reality"
+      "CNN NEWS": "News",
+      "HGTV": "Design & Dine",
+      "HOME AND GARDEN TV": "Design & Dine"
     };
 
     function recommendPackage() {
       const input = document.getElementById("channelInput").value;
       const channels = input.split(",").map(c => c.trim());
       const themePacks = new Set();
-      let premiumCount = 0;
+      const premiumPacks = new Set();
+      const unknownChannels = [];
 
       channels.forEach(ch => {
-        const pack = channelMap[ch];
-        if (pack) {
-          if (pack === "Premium") premiumCount++;
-          else themePacks.add(pack);
+        const key = ch.trim().toLowerCase();
+        let found = false;
+        for (const [channel, pack] of Object.entries(channelMap)) {
+          const ref = channel.toLowerCase();
+          if (key.includes(ref) || ref.includes(key)) {
+            found = true;
+            if (pack === "Premium") premiumPacks.add(channel);
+            else themePacks.add(pack);
+            break;
+          }
         }
+        if (!found) unknownChannels.push(ch);
       });
 
       const totalThemes = themePacks.size;
-      const resultText = `Customer wants: ${channels.join(", ")}\n\n` +
+      const totalPremium = premiumPacks.size;
+
+      const resultText =
+        `Customer wants: ${channels.join(", ")}\n\n` +
         `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
-        `Premium Channels: ${premiumCount} selected\n\n` +
-        `Suggested TELUS Package: Core + ${totalThemes} Theme Pack${totalThemes !== 1 ? "s" : ""}` +
-        `${premiumCount > 0 ? " + " + premiumCount + " Premium" + (premiumCount > 1 ? "s" : "") : ""}`;
+        `Premium Channels: ${Array.from(premiumPacks).join(", ") || "None"}\n` +
+        (unknownChannels.length > 0 ? `\n⚠️ Unrecognized Channels: ${unknownChannels.join(", ")}` : "") +
+        `\n\n✅ Summary:\n` +
+        `Theme Packs needed: ${totalThemes}\n` +
+        `Premiums needed: ${totalPremium}\n` +
+        `Suggested TELUS Package: Core` +
+        (totalThemes > 0 ? ` + ${totalThemes} Theme Pack${totalThemes > 1 ? "s" : ""}` : "") +
+        (totalPremium > 0 ? ` + ${totalPremium} Premium${totalPremium > 1 ? "s" : ""}` : "");
 
       document.getElementById("result").innerText = resultText;
     }
