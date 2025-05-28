@@ -55,78 +55,215 @@
   <div class="result" id="result"></div>
 
   <script>
+    function normalize(str) {
+      return str.toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
     const channelMap = {
-      "TSN": "TSN & Beyond",
-      "TSN1": "TSN & Beyond",
-      "TSN2": "TSN & Beyond",
-      "TSN3": "TSN & Beyond",
-      "TSN4": "TSN & Beyond",
-      "TSN5": "TSN & Beyond",
-      "NFL NETWORK": "TSN & Beyond",
-      "GOLF CHANNEL": "TSN & Beyond",
-      "SPORTSNET": "Sportsnet & Beyond",
-      "SPORTSNET ONE": "Sportsnet & Beyond",
-      "SPORTSNET 360": "Sportsnet & Beyond",
-      "SN1": "Sportsnet & Beyond",
-      "SNE": "Sportsnet & Beyond",
-      "SNO": "Sportsnet & Beyond",
-      "SNP": "Sportsnet & Beyond",
-      "SNW": "Sportsnet & Beyond",
-      "FX": "Blockbusters",
-      "FX CANADA": "Blockbusters",
-      "MOVIE TIME": "Blockbusters",
-      "CRIME INVESTIGATION": "Blockbusters",
-      "SHOWCASE": "Lifestyle & Beyond",
-      "NATIONAL GEOGRAPHIC": "Explore",
-      "NETFLIX": "Premium",
-      "CRAVE": "Premium",
-      "DISNEY+": "Premium",
-      "APPLE TV+": "Premium",
-      "AMAZON PRIME": "Premium",
-      "CNN": "News",
-      "CNN NEWS": "News",
-      "HGTV": "Design & Dine",
-      "HOME AND GARDEN TV": "Design & Dine"
+      // Include all mappings from today
+      "amazon music": "Prime",
+      "prime gaming": "Prime",
+      "prime video": "Prime",
+      "hayu": "Hayu",
+      "amc": "AMC+",
+      "amc+": "AMC+",
+      "shudder": "AMC+",
+      "sundance now": "AMC+",
+      "ifc films unlimited": "AMC+",
+      "hollywood suite 70s movies": "Hollywood Suite HD",
+      "hollywood suite 80s movies": "Hollywood Suite HD",
+      "hollywood suite 90s movies": "Hollywood Suite HD",
+      "hollywood suite 2000s movies": "Hollywood Suite HD",
+      "hollywood suite on demand": "Hollywood Suite HD",
+      "adult swim": "Blockbusters",
+      "crime + investigation": "Blockbusters",
+      "fx": "Blockbusters",
+      "fxx": "Blockbusters",
+      "movietime": "Blockbusters",
+      "a&e": "Prime Time",
+      "ctv drama channel": "Prime Time",
+      "tlc": "Prime Time",
+      "rewind": "Favourite Films",
+      "silver screen classics": "Favourite Films",
+      "tcm": "Favourite Films",
+      "ktla 5": "Superstations",
+      "my9": "Superstations",
+      "my38": "Superstations",
+      "peachtree tv": "Superstations",
+      "pix11": "Superstations",
+      "wgn 9 cw": "Superstations",
+      "ctv comedy channel": "Laughs & Cheers",
+      "dejaview": "Laughs & Cheers",
+      "game show network": "Laughs & Cheers",
+      "super channel fuse": "Super Channel",
+      "super channel heart & home": "Super Channel",
+      "super channel vault": "Super Channel",
+      "super channel quest": "Super Channel",
+      "cmt": "Medley",
+      "stingray country": "Medley",
+      "stingray loud": "Medley",
+      "stingray vibe": "Medley",
+      "stingray retro": "Medley",
+      "abc boston": "Time Shift",
+      "cbc": "Time Shift",
+      "citytv": "Time Shift",
+      "cbs boston": "Time Shift",
+      "ctv": "Time Shift",
+      "fox boston": "Time Shift",
+      "global": "Time Shift",
+      "nbc boston": "Time Shift",
+      "wgbh pbs boston": "Time Shift",
+      "ntv": "Time Shift",
+      "flavour network": "Living",
+      "cottage life": "Living",
+      "home network": "Living",
+      "makeful": "Living",
+      "magnolia network": "Design & Dine",
+      "food network": "Design & Dine",
+      "hgtv": "Design & Dine",
+      "wild tv": "Rural Outdoors",
+      "cowboy channel": "Rural Outdoors",
+      "the rural channel": "Rural Outdoors",
+      "water television network": "Rural Outdoors",
+      "rfd-tv canada": "Rural Outdoors",
+      "e!": "Variety",
+      "outtv": "Variety",
+      "bbc first": "Variety",
+      "much": "Variety",
+      "ctv life channel": "Variety",
+      "acorn tv": "Variety",
+      "lifetime": "Lifestyle & Beyond",
+      "slice": "Lifestyle & Beyond",
+      "showcase": "Lifestyle & Beyond",
+      "w network": "Lifestyle & Beyond",
+      "fight network": "Adrenaline",
+      "ctv speed channel": "Adrenaline",
+      "sportsman channel": "Adrenaline",
+      "fox sports racing": "More Sports",
+      "onesoccer": "More Sports",
+      "rev tv canada": "More Sports",
+      "game+": "More Sports",
+      "nba tv canada": "More Sports",
+      "tsn": "TSN & Beyond",
+      "tsn1": "TSN & Beyond",
+      "tsn2": "TSN & Beyond",
+      "tsn3": "TSN & Beyond",
+      "tsn4": "TSN & Beyond",
+      "tsn5": "TSN & Beyond",
+      "golf channel": "TSN & Beyond",
+      "nfl network": "TSN & Beyond",
+      "sportsnet 360": "Sportsnet & Beyond",
+      "sportsnet east": "Sportsnet & Beyond",
+      "sportsnet flames": "Sportsnet & Beyond",
+      "sportsnet oilers": "Sportsnet & Beyond",
+      "sportsnet one": "Sportsnet & Beyond",
+      "sportsnet ontario": "Sportsnet & Beyond",
+      "sportsnet pacific": "Sportsnet & Beyond",
+      "sportsnet vancouver hockey": "Sportsnet & Beyond",
+      "sportsnet 4k": "Sportsnet & Beyond",
+      "sportsnet one 4k": "Sportsnet & Beyond",
+      "cnn": "News",
+      "ctv news channel": "News",
+      "global news bc1": "News",
+      "hln": "News",
+      "msnbc": "News",
+      "al jazeera": "More News",
+      "bnn bloomberg": "More News",
+      "cnbc": "More News",
+      "fox news channel": "More News",
+      "bbc news": "More News",
+      "cnn international": "More News",
+      "euronews": "More News",
+      "nhk world japan": "More News",
+      "the news forum": "More News",
+      "dtour": "Explore",
+      "ctv wild channel": "Explore",
+      "nat geo wild": "Explore",
+      "national geographic": "Explore",
+      "bbc earth": "Nature & Civilization",
+      "love nature": "Nature & Civilization",
+      "love nature 4k": "Nature & Civilization",
+      "smithsonian channel": "Nature & Civilization",
+      "documentary channel": "Knowledge",
+      "h2": "Knowledge",
+      "mezzo live hd": "Knowledge",
+      "museum tv": "Knowledge",
+      "ctv sci-fi channel": "World & Beyond",
+      "history channel": "World & Beyond",
+      "ctv nature channel": "World & Beyond",
+      "oxygen true crime": "World & Beyond",
+      "usa network": "World & Beyond",
+      "discovery channel": "Discovery & Reality",
+      "investigation discovery": "Discovery & Reality",
+      "bravo": "Discovery & Reality",
+      "babytv english": "Kids Time",
+      "babytv mandarin": "Kids Time",
+      "nick": "Kids Time",
+      "family jr": "Kids Time",
+      "treehouse": "Kids Time",
+      "abc spark": "Family Time",
+      "cartoon network": "Family Time",
+      "wildbraintv": "Family Time",
+      "family channel": "Family Time",
+      "ytv": "Family Time",
+      "boomerang": "Family Time",
+      "disney channel": "Disney Time",
+      "disney junior": "Disney Time",
+      "disney xd": "Disney Time",
+      "netflix": "Premium",
+      "disney+": "Premium",
+      "apple tv+": "Premium",
+      "crave": "Premium",
+      "xbox game pass": "Premium",
+      "atn aapka colors": "South Asian Super Pack",
+      "atn": "South Asian Super Pack",
+      "atn sony": "South Asian Super Pack",
+      "atn punjabi": "South Asian Super Pack",
+      "channel punjabi": "South Asian Super Pack",
+      "ptc punjabi": "South Asian Super Pack"
     };
 
     function recommendPackage() {
       const input = document.getElementById("channelInput").value;
-      const channels = input.split(",").map(c => c.trim());
+      const entries = input.split(",").map(e => e.trim());
       const themePacks = new Set();
       const premiumPacks = new Set();
-      const unknownChannels = [];
+      const unrecognized = [];
 
-      channels.forEach(ch => {
-        const key = ch.trim().toLowerCase();
-        let found = false;
-        for (const [channel, pack] of Object.entries(channelMap)) {
-          const ref = channel.toLowerCase();
-          if (key.includes(ref) || ref.includes(key)) {
-            found = true;
-            if (pack === "Premium") premiumPacks.add(channel);
+      entries.forEach(userInput => {
+        const normInput = normalize(userInput);
+        let matched = false;
+        for (const [chName, pack] of Object.entries(channelMap)) {
+          if (normalize(chName).includes(normInput) || normInput.includes(normalize(chName))) {
+            if (pack.toLowerCase() === 'premium') premiumPacks.add(chName);
             else themePacks.add(pack);
+            matched = true;
             break;
           }
         }
-        if (!found) unknownChannels.push(ch);
+        if (!matched) unrecognized.push(userInput);
       });
 
-      const totalThemes = themePacks.size;
-      const totalPremium = premiumPacks.size;
-
-      const resultText =
-        `Customer wants: ${channels.join(", ")}\n\n` +
-        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
-        `Premium Channels: ${Array.from(premiumPacks).join(", ") || "None"}\n` +
-        (unknownChannels.length > 0 ? `\n⚠️ Unrecognized Channels: ${unknownChannels.join(", ")}` : "") +
-        `\n\n✅ Summary:\n` +
-        `Theme Packs needed: ${totalThemes}\n` +
-        `Premiums needed: ${totalPremium}\n` +
+      const result =
+        `Customer wants: ${entries.join(", ")}
+\n` +
+        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}
+` +
+        `Premium Theme Packs: ${Array.from(premiumPacks).join(", ") || "None"} (Total: ${premiumPacks.size})
+` +
+        (unrecognized.length ? `\n⚠️ Unrecognized Channels: ${unrecognized.join(", ")}
+` : "") +
+        `\n✅ Summary:
+` +
+        `Theme Packs needed: ${themePacks.size}
+` +
+        `Premiums needed: ${premiumPacks.size}
+` +
         `Suggested TELUS Package: Core` +
-        (totalThemes > 0 ? ` + ${totalThemes} Theme Pack${totalThemes > 1 ? "s" : ""}` : "") +
-        (totalPremium > 0 ? ` + ${totalPremium} Premium${totalPremium > 1 ? "s" : ""}` : "");
+        (themePacks.size ? ` + ${themePacks.size} Theme Pack${themePacks.size > 1 ? "s" : ""}` : "") +
+        (premiumPacks.size ? ` + ${premiumPacks.size} Premium${premiumPacks.size > 1 ? "s" : ""}` : "");
 
-      document.getElementById("result").innerText = resultText;
+      document.getElementById("result").innerText = result;
     }
   </script>
 </body>
