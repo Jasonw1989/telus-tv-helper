@@ -60,7 +60,6 @@
     }
 
     const channelMap = {
-      // Include all mappings from today
       "amazon music": "Prime",
       "prime gaming": "Prime",
       "prime video": "Prime",
@@ -233,14 +232,27 @@
       entries.forEach(userInput => {
         const normInput = normalize(userInput);
         let matched = false;
+
         for (const [chName, pack] of Object.entries(channelMap)) {
-          if (normalize(chName).includes(normInput) || normInput.includes(normalize(chName))) {
-            if (pack.toLowerCase() === 'premium') premiumPacks.add(chName);
+          if (normalize(chName) === normInput) {
+            if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
             else themePacks.add(pack);
             matched = true;
             break;
           }
         }
+
+        if (!matched) {
+          for (const [chName, pack] of Object.entries(channelMap)) {
+            if (normalize(chName).includes(normInput) || normInput.includes(normalize(chName))) {
+              if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
+              else themePacks.add(pack);
+              matched = true;
+              break;
+            }
+          }
+        }
+
         if (!matched) unrecognized.push(userInput);
       });
 
