@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Version 2.5 - Fixed recommendPackage error with preserved full data -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -61,11 +60,13 @@
       return str.toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
-    // Full original channel map restored
+    // Full original channel map, with "netflix" added as Premium
     const channelMap = {
       "amazon music": "Prime",
       "prime gaming": "Prime",
       "prime video": "Prime",
+      "HBO": "Prime",
+      "netflix": "Premium",
       "hayu": "Hayu",
       "amc": "AMC+",
       "amc+": "AMC+",
@@ -165,34 +166,36 @@
       "hln": "News",
       "msnbc": "News",
       "bbc news": "More News"
-      // 其余频道省略如上继续添加...
+      // …如有其他频道，可按需继续添加…
     };
 
     const pick5EligibleChannels = new Set([
-  "home and garden tv",
-  "aastha tv", "aaj tak", "anc", "a&e", "abp news", "abc spark", "adult swim", "al jazeera", "amc", "ary digital",
-  "atn b4u music", "atn food food", "atn life", "atn news", "atn max 2", "atn pm one", "atn punjabi plus",
-  "atn sony pal", "atn sony yay!", "atn times now", "atn urdu", "atn zoom", "bbc earth", "bbc first",
-  "bbc world news", "bnn bloomberg", "boomerang", "bravo", "canadian national tv", "cartoon network", "cbn",
-  "cbc news network", "cctv", "cctv 4", "cctv entertainment", "cctv/cgtn documentary", "cctv / cgtn news",
-  "channel y", "chinese wow tv", "cinema one", "cnbc", "cnn", "cottage life", "crime+ investigation",
-  "ctv comedy channel", "ctv drama channel", "ctv life channel", "ctv nature channel", "ctv news channel",
-  "ctv sci-fi channel", "ctv wild channel", "dejaview", "discovery", "disney channel", "disney junior",
-  "disney xd", "dragon tv", "dtour", "e!", "fairchild tv 2", "family channel", "family jr.", "filipino tv",
-  "flavour network", "food network", "fptv", "future tv", "fx", "fxx", "fox news", "game+", "game tv",
-  "game show network", "german kino plus", "gma life tv", "gma news tv", "golf channel", "gba satellite tv",
-  "halla bol", "h2", "home network", "hgtv", "history", "hln", "hollywood suite 70s", "hollywood suite 80s",
-  "hollywood suite 90s", "hollywood suite 2000s", "hum masala", "investigation discovery", "jstv international",
-  "kapatid 5", "lcn", "lifetime", "love nature", "magnolia network", "ls times", "mediaset italia",
-  "movietime", "msnbc", "much", "nat geo wild", "national geographic channel", "news only",
-  "new tang dynasty", "nfl network", "nhk world", "nickelodeon", "noovo", "oxygen true crime", "phoenix",
-  "ptc punjabi", "sanjha tv", "schlager tv", "showcase", "sic noticias", "slice", "smithsonian channel",
-  "sony tv", "straits tv", "talentvision", "times now"
-].map(normalize));
+      "home and garden tv",
+      "aastha tv", "aaj tak", "anc", "a&e", "abp news", "abc spark", "adult swim", "al jazeera", "amc", "ary digital",
+      "atn b4u music", "atn food food", "atn life", "atn news", "atn max 2", "atn pm one", "atn punjabi plus",
+      "atn sony pal", "atn sony yay!", "atn times now", "atn urdu", "atn zoom", "bbc earth", "bbc first",
+      "bbc world news", "bnn bloomberg", "boomerang", "bravo", "canadian national tv", "cartoon network", "cbn",
+      "cbc news network", "cctv", "cctv 4", "cctv entertainment", "cctv/cgtn documentary", "cctv / cgtn news",
+      "channel y", "chinese wow tv", "cinema one", "cnbc", "cnn", "cottage life", "crime+ investigation",
+      "ctv comedy channel", "ctv drama channel", "ctv life channel", "ctv nature channel", "ctv news channel",
+      "ctv sci-fi channel", "ctv wild channel", "dejaview", "discovery", "disney channel", "disney junior",
+      "disney xd", "dragon tv", "dtour", "e!", "fairchild tv 2", "family channel", "family jr.", "filipino tv",
+      "flavour network", "food network", "fptv", "future tv", "fx", "fxx", "fox news", "game+", "game tv",
+      "game show network", "german kino plus", "gma life tv", "gma news tv", "golf channel", "gba satellite tv",
+      "halla bol", "h2", "home network", "hgtv", "history", "hln", "hollywood suite 70s", "hollywood suite 80s",
+      "hollywood suite 90s", "hollywood suite 2000s", "hum masala", "investigation discovery", "jstv international",
+      "kapatid 5", "lcn", "lifetime", "love nature", "magnolia network", "ls times", "mediaset italia",
+      "movietime", "msnbc", "much", "nat geo wild", "national geographic channel", "news only",
+      "new tang dynasty", "nfl network", "nhk world", "nickelodeon", "noovo", "oxygen true crime", "phoenix",
+      "ptc punjabi", "sanjha tv", "schlager tv", "showcase", "sic noticias", "slice", "smithsonian channel",
+      "sony tv", "straits tv", "talentvision", "times now"
+    ].map(normalize));
 
     function recommendPackage() {
       const input = document.getElementById("channelInput").value;
-      const entries = Array.from(new Set(input.split(",").map(e => normalize(e.trim()))));
+      const entries = Array.from(new Set(
+        input.split(",").map(e => normalize(e.trim()))
+      ));
 
       const themePacks = new Set();
       const premiumPacks = new Set();
@@ -202,6 +205,7 @@
       entries.forEach(normInput => {
         let matched = false;
 
+        // ① 完全匹配
         for (const [chName, pack] of Object.entries(channelMap)) {
           if (normalize(chName) === normInput) {
             if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
@@ -212,9 +216,12 @@
           }
         }
 
+        // ② 如果没完全匹配，再用“单词边界”做模糊匹配
         if (!matched) {
           for (const [chName, pack] of Object.entries(channelMap)) {
-            if (normalize(chName).includes(normInput) || normInput.includes(normalize(chName))) {
+            const normCh = normalize(chName);
+            const pattern = new RegExp(`\\b${normCh}\\b`);
+            if (pattern.test(normInput)) {
               if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
               else themePacks.add(pack);
               matched = true;
@@ -224,34 +231,31 @@
           }
         }
 
-        if (!matched) unrecognized.push(normInput);
+        // ③ 如果依然没匹配上，就归为 unrecognized
+        if (!matched) {
+          unrecognized.push(normInput);
+        }
       });
 
       const allPick5 = entries.length <= 5 && entries.every(e => pick5EligibleChannels.has(e));
 
-      const result =
-        `Customer wants: ${entries.join(", ")}
-\n` +
-        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}
-` +
-        `Premium Theme Packs: ${Array.from(premiumPacks).join(", ") || "None"} (Total: ${premiumPacks.size})
-` +
-        (unrecognized.length ? `\n⚠️ Unrecognized Channels: ${unrecognized.join(", ")}
-` : "") +
-        `\n✅ Summary:
-` +
-        `Theme Packs needed: ${themePacks.size}
-` +
-        `Premiums needed: ${premiumPacks.size}
-` +
+      const resultText =
+        `Customer wants: ${entries.join(", ")}\n\n` +
+        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
+        `Premium Theme Packs: ${Array.from(premiumPacks).join(", ") || "None"} (Total: ${premiumPacks.size})\n` +
+        (unrecognized.length ? `\n⚠️ Unrecognized Channels: ${unrecognized.join(", ")}\n` : "") +
+        `\n✅ Summary:\n` +
+        `Theme Packs needed: ${themePacks.size}\n` +
+        `Premiums needed: ${premiumPacks.size}\n` +
         `Suggested TELUS Package: ` +
         (allPick5
           ? `Core + Pick 5`
           : `Core` +
             (themePacks.size ? ` + ${themePacks.size} Theme Pack${themePacks.size > 1 ? "s" : ""}` : "") +
-            (premiumPacks.size ? ` + ${premiumPacks.size} Premium${premiumPacks.size > 1 ? "s" : ""}` : ""));
+            (premiumPacks.size ? ` + ${premiumPacks.size} Premium${premiumPacks.size > 1 ? "s" : ""}` : "")
+        );
 
-      document.getElementById("result").innerText = result;
+      document.getElementById("result").innerText = resultText;
     }
 
     document.getElementById("recommendButton").addEventListener("click", recommendPackage);
