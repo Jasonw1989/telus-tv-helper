@@ -55,24 +55,18 @@
   <div class="result" id="result"></div>
 
   <script>
-    // 把字符串归一化：全小写、去掉所有非字母数字字符
+    // normalize()：把输入或 map 中的频道名统一成“全小写 + 去掉非英数字”的格式，方便准确匹配
     function normalize(str) {
       return str.toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
-    // 完整的 channelMap，将所有截图中列出的“缺失”频道都补在这里，
-    // 并使用方案A的“单词边界模糊匹配”逻辑。注意，这里对同一个channel，
-    // 只保留一个映射，如果之前已有（如discovery被映射在别处），则以新的Theme Pack为准。
+    // —— 之前我们已经定义好的 channelMap，就不重复贴了，只示意放在这里 —— 
     const channelMap = {
-      /* —— 之前已有的条目（按照之前版本保留） —— */
       "amazon music": "Prime",
       "prime gaming": "Prime",
       "prime video": "Prime",
       "netflix": "Premium",
-      // 下面将 discovery 重新归到 “Discovery & Reality”
-      // 如果你之前把它放在 “Prime Time” 里，这里以新的“Discovery & Reality”为准
       "discovery": "Discovery & Reality",
-
       "hayu": "Hayu",
       "amc": "AMC+",
       "amc+": "AMC+",
@@ -180,7 +174,7 @@
       "love nature": "Nature & Civilization",
       "love nature 4k": "Nature & Civilization",
       "smithsonian channel": "Nature & Civilization",
-      "documentary": "Knowledge",
+      "documentary": "Knowledge",     // 截图里带个“7 Documentary”，写成 normalize("documentary")
       "h2": "Knowledge",
       "mezzo live": "Knowledge",
       "museum tv": "Knowledge",
@@ -192,13 +186,11 @@
       "investigation discovery": "Discovery & Reality",
       "id": "Discovery & Reality",
       "bravo": "Discovery & Reality"
-      /* —— 如果后续还有新频道，也请在这里继续补充 —— */
     };
 
-    // pick5EligibleChannels 保持之前那些“1~5个频道，可用 Core + Pick 5”的清单
     const pick5EligibleChannels = new Set([
-      "home and garden tv",
-      "aastha tv", "aaj tak", "anc", "a&e", "abp news", "abc spark", "adult swim", "al jazeera", "amc", "ary digital",
+      // 之前放在 pick5EligibleChannels 里的所有频道都保持不变
+      "home and garden tv", "aastha tv", "aaj tak", "anc", "a&e", "abp news", "abc spark", "adult swim", "al jazeera", "amc", "ary digital",
       "atn b4u music", "atn food food", "atn life", "atn news", "atn max 2", "atn pm one", "atn punjabi plus",
       "atn sony pal", "atn sony yay!", "atn times now", "atn urdu", "atn zoom", "bbc earth", "bbc first",
       "bbc world news", "bnn bloomberg", "boomerang", "bravo", "canadian national tv", "cartoon network", "cbn",
@@ -218,6 +210,38 @@
       "sony tv", "straits tv", "talentvision", "times now"
     ].map(normalize));
 
+    // 将“(themePacks_count, premiumPacks_count, allPick5) => 最终标签”定义为一个映射函数：
+    function buildPackageLabel(themeCount, premiumCount, allPick5) {
+      // 1) 只要 allPick5 = true 且 themeCount = 0 && premiumCount = 0，就输出 “Basics + Pick5”
+      if (allPick5 && themeCount === 0 && premiumCount === 0) {
+        return "Basics + Pick 5";
+      }
+      // 2) 如果 both themeCount=0 & premiumCount=0 且不是 allPick5，就输出 “Core”
+      if (themeCount === 0 && premiumCount === 0 && !allPick5) {
+        return "Core";
+      }
+      // 3) 如果 allPick5 = true && (themeCount + premiumCount > 0)，就输出 “Core + Pick 5”
+      if (allPick5 && (themeCount + premiumCount > 0)) {
+        return "Core + Pick 5";
+      }
+      // 4) 如果 themeCount = 0 && premiumCount > 0，就输出 “Core + X Premium”
+      if (themeCount === 0 && premiumCount > 0) {
+        // 「1 Premium」/「2 Premium」/……
+        return `Core + ${premiumCount} Premium${premiumCount > 1 ? "s" : ""}`;
+      }
+      // 5) 如果 themeCount > 0 && premiumCount === 0，就输出 “Core + X Theme Packs”
+      if (themeCount > 0 && premiumCount === 0) {
+        return `Core + ${themeCount} Theme Pack${themeCount > 1 ? "s" : ""}`;
+      }
+      // 6) 如果 themeCount > 0 && premiumCount > 0，就输出 “X Theme Packs + Y Premium”
+      //    注意：这里不再带 “Core” 前缀，和截图里保持一致
+      if (themeCount > 0 && premiumCount > 0) {
+        return `${themeCount} Theme Pack${themeCount > 1 ? "s" : ""} + ${premiumCount} Premium${premiumCount > 1 ? "s" : ""}`;
+      }
+      // 万一有其他组合，兜底用 Core
+      return "Core";
+    }
+
     function recommendPackage() {
       // 1. 先把 textarea 中的内容读出来、按逗号 split，再 normalize 一下
       const input = document.getElementById("channelInput").value;
@@ -227,24 +251,21 @@
 
       const themePacks = new Set();
       const premiumPacks = new Set();
-      const recognizedChannels = [];
       const unrecognized = [];
 
       entries.forEach(normInput => {
         let matched = false;
 
-        // 2. 完全匹配
+        // 完全匹配
         for (const [chName, pack] of Object.entries(channelMap)) {
           if (normalize(chName) === normInput) {
             if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
             else themePacks.add(pack);
             matched = true;
-            recognizedChannels.push(normInput);
             break;
           }
         }
-
-        // 3. 如果完全匹配没走到，就用“单词边界”做模糊匹配
+        // 单词边界模糊匹配
         if (!matched) {
           for (const [chName, pack] of Object.entries(channelMap)) {
             const normCh = normalize(chName);
@@ -253,43 +274,37 @@
               if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
               else themePacks.add(pack);
               matched = true;
-              recognizedChannels.push(normInput);
               break;
             }
           }
         }
-
-        // 4. 如果连模糊都没匹配上，就放到 unrecognized
-        if (!matched) {
-          unrecognized.push(normInput);
-        }
+        if (!matched) unrecognized.push(normInput);
       });
 
-      // 5. 判断能否使用 Core + Pick 5
-      const allPick5 = entries.length <= 5 && entries.every(e => pick5EligibleChannels.has(e));
+      // 判断是否满足 Pick 5：1~5 个频道，且都在 pick5EligibleChannels 里
+      const allPick5 = (entries.length <= 5) && entries.every(e => pick5EligibleChannels.has(e));
 
-      // 6. 拼总体结果字符串
-      const resultText =
+      // 根据算出的 themePacks.size、premiumPacks.size、allPick5，生成最终“套餐标签”
+      const themeCount = themePacks.size;
+      const premiumCount = premiumPacks.size;
+      const packageLabel = buildPackageLabel(themeCount, premiumCount, allPick5);
+
+      // 下面还是把原本要显示的“细节信息”拼成一段 summaryText
+      const summaryText =
         `Customer wants: ${entries.join(", ")}\n\n` +
-        `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
-        `Premium Theme Packs: ${Array.from(premiumPacks).join(", ") || "None"} (Total: ${premiumPacks.size})\n` +
+        `Required Theme Packs: ${themeCount > 0 ? Array.from(themePacks).join(", ") : "None"}\n` +
+        `Premium Theme Packs: ${premiumCount > 0 ? Array.from(premiumPacks).join(", ") : "None"} (Total: ${premiumCount})\n` +
         (unrecognized.length ? `\n⚠️ Unrecognized Channels: ${unrecognized.join(", ")}\n` : "") +
         `\n✅ Summary:\n` +
-        `Theme Packs needed: ${themePacks.size}\n` +
-        `Premiums needed: ${premiumPacks.size}\n` +
-        `Suggested TELUS Package: ` +
-        (allPick5
-          ? `Core + Pick 5`
-          : `Core` +
-            (themePacks.size ? ` + ${themePacks.size} Theme Pack${themePacks.size > 1 ? "s" : ""}` : "") +
-            (premiumPacks.size ? ` + ${premiumPacks.size} Premium${premiumPacks.size > 1 ? "s" : ""}` : "")
-        );
+        `Theme Packs needed: ${themeCount}\n` +
+        `Premiums needed: ${premiumCount}\n` +
+        `Suggested TELUS Package: ${packageLabel}`;
 
-      // 7. 把结果显示到页面上
-      document.getElementById("result").innerText = resultText;
+      document.getElementById("result").innerText = summaryText;
     }
 
     document.getElementById("recommendButton").addEventListener("click", recommendPackage);
   </script>
 </body>
 </html>
+
