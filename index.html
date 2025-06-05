@@ -55,18 +55,24 @@
   <div class="result" id="result"></div>
 
   <script>
-    // Normalization function
+    // 把字符串归一化：全小写、去掉所有非字母数字字符
     function normalize(str) {
       return str.toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
-    // Full original channel map, with "netflix" added as Premium
+    // 完整的 channelMap，将所有截图中列出的“缺失”频道都补在这里，
+    // 并使用方案A的“单词边界模糊匹配”逻辑。注意，这里对同一个channel，
+    // 只保留一个映射，如果之前已有（如discovery被映射在别处），则以新的Theme Pack为准。
     const channelMap = {
+      /* —— 之前已有的条目（按照之前版本保留） —— */
       "amazon music": "Prime",
       "prime gaming": "Prime",
       "prime video": "Prime",
-      "HBO": "Prime",
       "netflix": "Premium",
+      // 下面将 discovery 重新归到 “Discovery & Reality”
+      // 如果你之前把它放在 “Prime Time” 里，这里以新的“Discovery & Reality”为准
+      "discovery": "Discovery & Reality",
+
       "hayu": "Hayu",
       "amc": "AMC+",
       "amc+": "AMC+",
@@ -165,10 +171,31 @@
       "global news bc1": "News",
       "hln": "News",
       "msnbc": "News",
-      "bbc news": "More News"
-      // …如有其他频道，可按需继续添加…
+      "bbc news": "More News",
+      "dtour": "Explore",
+      "ctv wild channel": "Explore",
+      "nat geo wild": "Explore",
+      "national geographic": "Explore",
+      "bbc earth": "Nature & Civilization",
+      "love nature": "Nature & Civilization",
+      "love nature 4k": "Nature & Civilization",
+      "smithsonian channel": "Nature & Civilization",
+      "documentary": "Knowledge",
+      "h2": "Knowledge",
+      "mezzo live": "Knowledge",
+      "museum tv": "Knowledge",
+      "ctv sci fi channel": "World & Beyond",
+      "history": "World & Beyond",
+      "ctv nature channel": "World & Beyond",
+      "oxygen true crime": "World & Beyond",
+      "usa network": "World & Beyond",
+      "investigation discovery": "Discovery & Reality",
+      "id": "Discovery & Reality",
+      "bravo": "Discovery & Reality"
+      /* —— 如果后续还有新频道，也请在这里继续补充 —— */
     };
 
+    // pick5EligibleChannels 保持之前那些“1~5个频道，可用 Core + Pick 5”的清单
     const pick5EligibleChannels = new Set([
       "home and garden tv",
       "aastha tv", "aaj tak", "anc", "a&e", "abp news", "abc spark", "adult swim", "al jazeera", "amc", "ary digital",
@@ -192,9 +219,10 @@
     ].map(normalize));
 
     function recommendPackage() {
+      // 1. 先把 textarea 中的内容读出来、按逗号 split，再 normalize 一下
       const input = document.getElementById("channelInput").value;
       const entries = Array.from(new Set(
-        input.split(",").map(e => normalize(e.trim()))
+        input.split(",").map(e => normalize(e.trim())).filter(e => e !== "")
       ));
 
       const themePacks = new Set();
@@ -205,7 +233,7 @@
       entries.forEach(normInput => {
         let matched = false;
 
-        // ① 完全匹配
+        // 2. 完全匹配
         for (const [chName, pack] of Object.entries(channelMap)) {
           if (normalize(chName) === normInput) {
             if (pack.toLowerCase().includes('premium')) premiumPacks.add(chName);
@@ -216,7 +244,7 @@
           }
         }
 
-        // ② 如果没完全匹配，再用“单词边界”做模糊匹配
+        // 3. 如果完全匹配没走到，就用“单词边界”做模糊匹配
         if (!matched) {
           for (const [chName, pack] of Object.entries(channelMap)) {
             const normCh = normalize(chName);
@@ -231,14 +259,16 @@
           }
         }
 
-        // ③ 如果依然没匹配上，就归为 unrecognized
+        // 4. 如果连模糊都没匹配上，就放到 unrecognized
         if (!matched) {
           unrecognized.push(normInput);
         }
       });
 
+      // 5. 判断能否使用 Core + Pick 5
       const allPick5 = entries.length <= 5 && entries.every(e => pick5EligibleChannels.has(e));
 
+      // 6. 拼总体结果字符串
       const resultText =
         `Customer wants: ${entries.join(", ")}\n\n` +
         `Required Theme Packs: ${Array.from(themePacks).join(", ") || "None"}\n` +
@@ -255,6 +285,7 @@
             (premiumPacks.size ? ` + ${premiumPacks.size} Premium${premiumPacks.size > 1 ? "s" : ""}` : "")
         );
 
+      // 7. 把结果显示到页面上
       document.getElementById("result").innerText = resultText;
     }
 
